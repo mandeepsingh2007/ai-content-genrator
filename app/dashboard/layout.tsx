@@ -1,25 +1,24 @@
-"use client"
-import React from 'react'
+"use client";
+import React, { useState } from 'react';
 import SideNav from './_components/SideNav';
 import Header from './_components/Header';
 import { TotalUsageContext } from '../(context)/TotalUsageContext';
-import { useState } from 'react';
 import { UserSubscriptionContext } from '../(context)/UserSubscriptionContext';
 import { UpdateCreditUsageContext } from '../(context)/UpdateCreditUsageContext';
 
-const layout = ({
-    children,
-}: Readonly<{
+interface LayoutProps {
     children: React.ReactNode;
-}>) => {
+}
 
-    const [totalUsage, setTotalUsage] = useState<any>(0)
-    const [userSubscription, setUserSubscription] = useState<boolean>(false)
-    const [updateCreditUsage,setUpdateCreditUsage] = useState<any>()
+const Layout = ({ children }: LayoutProps) => {
+    const [totalUsage, setTotalUsage] = useState<number>(0);
+    const [userSubscription, setUserSubscription] = useState<boolean>(false);
+    const [updateCreditUsage, setUpdateCreditUsage] = useState<any>(null);
+
     return (
         <TotalUsageContext.Provider value={{ totalUsage, setTotalUsage }}>
             <UserSubscriptionContext.Provider value={{ userSubscription, setUserSubscription }}>
-                <UpdateCreditUsageContext.Provider value={{updateCreditUsage,setUpdateCreditUsage}}>
+                <UpdateCreditUsageContext.Provider value={{ updateCreditUsage, setUpdateCreditUsage }}>
                     <div className='bg-slate-100 h-screen'>
                         <div className='md:w-64 hidden md:block fixed'>
                             <SideNav />
@@ -28,12 +27,11 @@ const layout = ({
                             <Header />
                             {children}
                         </div>
-
                     </div>
                 </UpdateCreditUsageContext.Provider>
             </UserSubscriptionContext.Provider>
         </TotalUsageContext.Provider>
-    )
+    );
 }
 
-export default layout
+export default Layout;
