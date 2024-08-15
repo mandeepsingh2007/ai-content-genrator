@@ -8,7 +8,7 @@ const Dashboard = () => {
   return (
     <div>
       <SearchSection onSearchInput={(value:string)=>setUserSearchInput(value)}/>
-      <TemplateListSection userSearchInput={userSearchInput}/>
+      <TemplateListSection usersearchInput={userSearchInput}/>
       </div>
   )
 }

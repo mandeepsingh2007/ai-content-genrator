@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { useUser } from '@clerk/nextjs';
-import React, { useContext, useCallback, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { db } from '@/utils/db';
 import { AIOutput, UserSubscription } from '@/utils/schema';
 import { eq } from 'drizzle-orm';
@@ -10,19 +10,28 @@ import { TotalUsageContext } from '@/app/(context)/TotalUsageContext';
 import { UserSubscriptionContext } from '@/app/(context)/UserSubscriptionContext';
 import { UpdateCreditUsageContext } from '@/app/(context)/UpdateCreditUsageContext';
 
-interface AIOutputData {
-  aiResponse?: string | null;
-  // Add other fields if necessary
-}
-
 function UsageTrack() {
   const { user } = useUser();
   const { totalUsage, setTotalUsage } = useContext(TotalUsageContext);
   const { userSubscription, setUserSubscription } = useContext(UserSubscriptionContext);
-  const [maxWords, setMaxWords] = useState(10000);
-  const { updateCreditUsage } = useContext(UpdateCreditUsageContext);
+  const [maxWords, setMaxWords] = useState(10000); // Fix: initialize maxWords as state
+  const {updateCreditUsage, setUpdateCreditUsage}=useContext(UpdateCreditUsageContext)
 
-  const GetData = useCallback(async () => {
+  useEffect(() => {
+    if (user) {
+      GetData();
+      IsUserSubscribe(); // Move this outside of GetData
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      GetData();
+    }
+  }, [updateCreditUsage]);
+  
+
+  const GetData = async () => {
     if (user?.primaryEmailAddress?.emailAddress) {
       const result = await db
         .select()
@@ -30,9 +39,9 @@ function UsageTrack() {
         .where(eq(AIOutput.createdBy, user.primaryEmailAddress.emailAddress));
       GetTotalUsage(result);
     }
-  }, [user]);
+  };
 
-  const IsUserSubscribe = useCallback(async () => {
+  const IsUserSubscribe = async () => {
     if (user?.primaryEmailAddress?.emailAddress) {
       const result = await db
         .select()
@@ -41,26 +50,16 @@ function UsageTrack() {
 
       if (result && result.length > 0) {
         setUserSubscription(true);
-        setMaxWords(1000000);
+        setMaxWords(1000000); // Fix: call setMaxWords to update state
       }
     }
-  }, [user]);
+  };
 
-  useEffect(() => {
-    if (user) {
-      GetData();
-      IsUserSubscribe();
-    }
-  }, [user, GetData, IsUserSubscribe]);
-
-  useEffect(() => {
-    if (user) {
-      GetData();
-    }
-  }, [updateCreditUsage, GetData, user]);
-
-  const GetTotalUsage = (result: AIOutputData[]) => {
-    const total = result.reduce((acc, element) => acc + (element.aiResponse?.length || 0), 0);
+  const GetTotalUsage = (result: AIOutput[]) => {
+    let total = 0;
+    result.forEach((element) => {
+      total += Number(element.aiResponse?.length || 0);
+    });
     setTotalUsage(total);
   };
 
@@ -72,7 +71,7 @@ function UsageTrack() {
           <div
             className="h-2 bg-white rounded-full"
             style={{
-              width: `${(totalUsage / maxWords) * 100}%`,
+              width: `${(totalUsage / maxWords) * 100}%`, // dynamic width based on usage
             }}
           ></div>
         </div>
